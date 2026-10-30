@@ -20,8 +20,8 @@ FROM_EMAIL = os.environ.get("LINKO_SMTP_EMAIL", "linkosudan@gmail.com")
 APP_PASSWORDS = [
     "utdctvaxdexlbhsa"
 ]
-
 ACTIVE_EMAIL_OTPS = {}
+OTP_EXPIRY_SECONDS = 300
 def send_verification_email_task(to_email, code):
     import urllib.request
     print("\n" + "=" * 50)
@@ -2090,6 +2090,7 @@ HTML_CONTENT = """<!DOCTYPE html>
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
+
 
     try { setPersistence(auth, inMemoryPersistence); } catch(e) {}
 
