@@ -1,5 +1,7 @@
 
 
+import code
+import code
 import http.server
 import json
 import os
@@ -20,7 +22,7 @@ FROM_EMAIL = os.environ.get("LINKO_SMTP_EMAIL", "linkosudan@gmail.com")
 APP_PASSWORDS = [
     "utdctvaxdexlbhsa"
 ]
-ACTIVE_EMAIL_OTPS = {}
+ACTIVE_EMAIL_OTPS = {} 
 OTP_EXPIRY_SECONDS = 300
 def send_verification_email_task(to_email, code):
     import urllib.request
@@ -29,7 +31,7 @@ def send_verification_email_task(to_email, code):
     print(f"المستلم : {to_email}")
     print("=" * 50 + "\n")
 
-    gas_url = "https://script.google.com/macros/s/AKfycbx_He4wUHteyMOn_zVBF5ms7NbqJ6eHkgYqHy50g79RKCk7aBdc6FiujYq7Z6207KnK/exec"
+    gas_url = "https://script.google.com/macros/s/AKfycbyb82DYYKl4Bn1YgzNvcLdNG8ElLljhTL1RfsNJG69j44clpE7NpIk983PndeBf4jH/exec"
     payload = json.dumps({"email": to_email, "code": str(code)}).encode("utf-8")
     req = urllib.request.Request(gas_url, data=payload, headers={"Content-Type": "application/json"})
     try:
