@@ -1,3 +1,5 @@
+
+
 import http.server
 import json
 import os
@@ -20,48 +22,21 @@ APP_PASSWORDS = [
 ]
 
 ACTIVE_EMAIL_OTPS = {}
-OTP_EXPIRY_SECONDS = 300
-
 def send_verification_email_task(to_email, code):
-    """إرسال البريد الإلكتروني في الخلفية مع طباعة فورية في الترمينال"""
-    print("\n" + "="*50)
-    print(f"🔑 [رمز التحقق Linko OTP]: >>> {code} <<<")
-    print(f"📧 المُرسِل: {FROM_EMAIL} | المُستلِم: {to_email}")
-    print("="*50 + "\n")
+    import urllib.request
+    print("\n" + "=" * 50)
+    print(f"🔑 Linko OTP: [>>>{code}<<<]")
+    print(f"المستلم : {to_email}")
+    print("=" * 50 + "\n")
 
-    password = APP_PASSWORDS[0]
+    gas_url = "https://script.google.com/macros/s/AKfycbx_He4wUHteyMOn_zVBF5ms7NbqJ6eHkgYqHy50g79RKCk7aBdc6FiujYq7Z6207KnK/exec"
+    payload = json.dumps({"email": to_email, "code": str(code)}).encode("utf-8")
+    req = urllib.request.Request(gas_url, data=payload, headers={"Content-Type": "application/json"})
     try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = f"رمز التحقق الخاص بك في Linko: {code}"
-        msg["From"] = f"Linko Security <{FROM_EMAIL}>"
-        msg["To"] = to_email
-
-        html_body = f"""
-        <div style="direction: rtl; text-align: right; font-family: 'Cairo', Tahoma, Arial, sans-serif; background-color: #0b1014; color: #ffffff; padding: 30px; border-radius: 16px; max-width: 500px; margin: 0 auto; border: 1px solid #202c33;">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <h1 style="color: #00A884; margin: 0; font-size: 32px;">Linko</h1>
-                <p style="color: #8696a0; font-size: 14px; margin-top: 5px;">تأكيد الدخول الآمن</p>
-            </div>
-            <div style="background-color: #111b21; border-radius: 12px; padding: 20px; border: 1px solid #2a3942; text-align: center;">
-                <p style="font-size: 15px; color: #e9edef; margin-bottom: 15px;">رمز التحقق الخاص بحسابك هو:</p>
-                <div style="font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #00A884; margin: 15px 0; background: #1f2c34; padding: 12px; border-radius: 8px; display: inline-block;">
-                    {code}
-                </div>
-                <p style="font-size: 13px; color: #8696a0; margin-top: 15px;">الرمز صالح للاستخدام لمدة 5 دقائق فقط.</p>
-            </div>
-            <p style="text-align: center; font-size: 12px; color: #536471; margin-top: 25px;">&copy; 2026 Linko Messenger. جميع الحقوق محفوظة.</p>
-        </div>
-        """
-        msg.attach(MIMEText(html_body, "html", "utf-8"))
-
-        server = smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10)
-        server.login(FROM_EMAIL, password)
-        server.sendmail(FROM_EMAIL, to_email, msg.as_string())
-        server.quit()
-        print("✅ تم تسليم الإيميل بنجاح إلى بريد Google!")
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            print("تم إرسال بريد Google بنجاح سحابياً عبر Apps Script!")
     except Exception as e:
-        print(f"[ملاحظة إرسال SMTP]: {e}")
-
+        print(f"ملاحظة إرسال [GAS]: {e}")
 HTML_CONTENT = """<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -1450,7 +1425,7 @@ HTML_CONTENT = """<!DOCTYPE html>
 
         <div style="display:flex; justify-content:space-between; align-items:center; width:100%; font-size:12.5px;">
           <span id="btn-back-to-creds" style="color:#8696a0; cursor:pointer;"><i class="fas fa-arrow-right"></i> رجوع وتعديل البيانات</span>
-          <span id="re -btn" style="color:var(--primary-color); cursor:pointer; font-weight:bold;">إعادة الإرسال</span>
+          <span id="resend-otp-btn" style="color:var(--primary-color); cursor:pointer; font-weight:bold;">إعادة الإرسال</span>
         </div>
       </div>
 
@@ -3123,7 +3098,7 @@ HTML_CONTENT = """<!DOCTYPE html>
             isCallVideoMode = callData.isVideo;
 
             document.getElementById('call-user-name').innerText = callData.callerName;
-             document.getElementById('call-user-avatar').src = callData.callerDp;
+            document.getElementById('call-user-avatar').src = callData.callerDp;
             setupCallUIState(callData.isVideo);
             document.getElementById('call-screen').classList.add('active');
 
@@ -4254,9 +4229,9 @@ def find_available_port(start_port=8080):
                 return port
             port += 1
 
-PORT = int(os.environ.get("PORT", 8080))
+PORT = find_available_port(8080)
 
-with open("index.recovered.html", "w", encoding="utf-8") as f:
+with open("index.html", "w", encoding="utf-8") as f:
     f.write(HTML_CONTENT)
 
 class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
@@ -4282,8 +4257,11 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                     self._send_json({"success": False, "message": "البريد الإلكتروني مطلوب"})
                     return
                 
-                code = str(body.get('otp', '')).strip() or str(random.randint(100000, 999999))
-                
+                code = str(random.randint(100000, 999999))
+                ACTIVE_EMAIL_OTPS[email] = {
+                    "code": code,
+                    "created_at": time.time()
+                }
                 
                 threading.Thread(target=send_verification_email_task, args=(email, code), daemon=True).start()
                 self._send_json({"success": True})
@@ -4336,8 +4314,6 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     daemon_threads = True
     allow_reuse_address = True
 
-PORT = int(os.environ.get("PORT", 8080))
-
 def start_server():
     with ThreadedTCPServer(("", PORT), CustomHTTPHandler) as httpd:
         httpd.serve_forever()
@@ -4349,8 +4325,9 @@ print("=" * 60)
 
 server_thread = threading.Thread(target=start_server, daemon=True)
 server_thread.start()
+
 time.sleep(1)
-# webbrowser.open(f"http://localhost:{PORT}/index.html")
+webbrowser.open(f"http://localhost:{PORT}/index.html")
 
 try:
     while True:
